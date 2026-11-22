@@ -7,7 +7,8 @@
 <style>
 :root{--bg:#1c2631;--bar:#25313f;--line:#3b4a5c;--btn:#2f3d4d;--ac:#2fb5a8;--ink:#e9eef3;--acL1:#bfece7;--acL2:#7fd1c8;--acD:#17635c;--acInk:#06201d}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
-html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;background:var(--bg);color:var(--ink);font:14px/1.2 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+[hidden]{display:none!important}
+html,body{margin:0;touch-action:manipulation;-webkit-text-size-adjust:100%;height:100%;overflow:hidden;overscroll-behavior:none;background:var(--bg);color:var(--ink);font:14px/1.2 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
 body{display:flex;flex-direction:column;height:100dvh;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 .row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:6px 10px;background:var(--bar)}
 #rng{background:var(--bg);border-bottom:1px solid var(--line)}
@@ -19,9 +20,10 @@ select{padding:0 6px}
 .val{min-width:4.6em;text-align:center;font-variant-numeric:tabular-nums}
 .lbl{color:#9fb0c1;font-size:13px}
 input[type=range]{accent-color:var(--ac);height:30px;margin:0}
-#pos{flex:1;min-width:110px}
+#pos,#pos2{flex:1;min-width:110px}
 #sfp{max-width:46vw}
 #rt{display:inline-block;width:9em;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+#rt.two{width:15em}
 #wid{width:110px}
 #cfg{display:none;gap:8px 18px}
 #cfg.open{display:flex}
@@ -31,12 +33,15 @@ input[type=range]{accent-color:var(--ac);height:30px;margin:0}
 .sw{width:32px;min-width:32px;height:32px;min-height:32px;padding:0;border-radius:50%;border:3px solid transparent}
 .sw.sel{border-color:#fff}
 #acc{width:44px;height:34px;padding:2px;border:1px solid var(--line);border-radius:8px;background:var(--btn)}
-#chord{position:absolute;top:6px;left:50%;transform:translateX(-50%);z-index:5;pointer-events:none;background:rgba(13,17,23,.5);color:#dfe6ee;padding:3px 10px;border-radius:8px;text-align:center;max-width:92%}
-#chord span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#chord .cn{font-size:15px;font-weight:600;line-height:1.3}
-#chord .cs{font-size:10px;color:#9fb0c1}
-#kb{flex:1;position:relative;overflow:hidden;touch-action:none;background:#0d1117;min-height:120px}
-#in{position:absolute;left:0;top:0;bottom:0;width:100%}
+#chord{flex:1 1 9em;min-width:0;align-self:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;visibility:hidden;color:#dfe6ee}
+#chord .cn{font-size:20px;font-weight:600}
+#chord .cs{font-size:11px;color:#9fb0c1;margin-left:.7em}
+#stage{flex:1;display:flex;flex-direction:column;min-height:0;position:relative}
+#roll{flex:1;min-height:60px;position:relative;background:#0d1117;border-bottom:1px solid #2a3340;touch-action:none}
+#roll canvas{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
+#kb,#kb2{flex:1;position:relative;overflow:hidden;touch-action:none;background:#0d1117;min-height:90px}
+#kb2{border-bottom:1px solid #2a3340}
+#in,#in2{position:absolute;left:0;top:0;bottom:0;width:100%}
 .key{position:absolute;top:0}
 .w{bottom:0;width:var(--ww);background:linear-gradient(#fff,#e8e8e8);border-right:1px solid #a8a8a8;border-radius:0 0 7px 7px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px;color:#666;font-size:clamp(10px,calc(var(--ww) * .28),16px);white-space:nowrap}
 .w.on{background:linear-gradient(var(--acL1),var(--acL2))}
@@ -51,11 +56,14 @@ input[type=range]{accent-color:var(--ac);height:30px;margin:0}
   <div class="grp"><button id="octD" aria-label="表示を1オクターブ下げる">−</button><span class="val" id="octL"></span><button id="octU" aria-label="表示を1オクターブ上げる">＋</button></div>
   <button id="sus" aria-pressed="false">サステイン</button>
   <button id="cfgB">設定</button>
+  <span id="chord"><span class="cn"></span><span class="cs"></span></span>
 </div>
 <div class="row" id="cfg">
   <label>音量<input type="range" id="vol" min="0" max="1" step="0.01"></label>
   <label>残響<input type="range" id="rev" min="0" max="1" step="0.01"></label>
   <label>鍵盤の表示<select id="lab"><option value="c">Cのみ</option><option value="jp">ドレミ</option><option value="en">CDE</option><option value="off">なし</option></select></label>
+  <label>画面<select id="lay"><option value="kb">鍵盤のみ</option><option value="roll">ピアノロール＋鍵盤</option><option value="two">二段鍵盤</option></select></label>
+  <label id="rsw">流れる速度<input type="range" id="rv" min="1" max="16" step="0.5"></label>
   <label><input type="checkbox" id="chk">コード表示</label>
   <label>コード表記<select id="chm"><option value="abc">C D E</option><option value="jp">ド レ ミ</option></select></label>
   <label><input type="checkbox" id="vel">タッチ位置で強弱</label>
@@ -67,12 +75,16 @@ input[type=range]{accent-color:var(--ac);height:30px;margin:0}
   <button id="fs">全画面</button>
 </div>
 <div class="row" id="rng">
-  <span class="lbl">位置</span>
-  <input type="range" id="pos" min="0" step="any">
+  <span class="lbl" id="l2" hidden>上段</span><input type="range" id="pos2" min="0" step="any" hidden>
+  <span class="lbl" id="l1">位置</span><input type="range" id="pos" min="0" step="any">
   <span class="lbl">幅</span><input type="range" id="wid" min="5" max="75" step="any">
   <span class="lbl" id="rt"></span>
 </div>
-<div id="kb"><div id="in"></div><div id="chord" hidden><span class="cn"></span><span class="cs"></span></div></div>
+<div id="stage">
+  <div id="roll"><canvas id="rollc"></canvas></div>
+  <div id="kb2" hidden><div id="in2"></div></div>
+  <div id="kb"><div id="in"></div></div>
+</div>
 
 <script>
 const $=id=>document.getElementById(id), clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
@@ -98,50 +110,85 @@ const INST={
 };
 
 /* 設定（保存） */
-let S={inst:'piano',vis:innerWidth<600?8:14,start:null,vol:.8,rev:.25,lab:'c',vel:true,sl:'sc',ac:'#2fb5a8',ch:true,cm:'abc'};
+let S={inst:'piano',vis:innerWidth<600?8:14,start:null,vol:.8,rev:.25,lab:'c',vel:true,sl:'sc',ac:'#2fb5a8',ch:true,cm:'abc',rl:true,rv:3,lay:null,start2:null};
 try{Object.assign(S,JSON.parse(localStorage.getItem('tpiano2')||'{}'))}catch(e){}
+if(!S.lay)S.lay=S.rl===false?'kb':'roll'; /* 以前の設定(ピアノロールのオンオフ)を引き継ぐ */
+S.rl=S.lay==='roll';
 if(!/^#[0-9a-f]{6}$/i.test(S.ac))S.ac='#2fb5a8';S.ac=S.ac.toLowerCase();
 if(String(S.inst).startsWith('sf:'))S.inst='piano';
 const save=()=>{try{localStorage.setItem('tpiano2',JSON.stringify(S))}catch(e){}};
 
-/* 鍵盤の生成 */
-const kb=$('kb'), kin=$('in'), keyEl={}, whites=[];
+/* 鍵盤の生成（下段=boards[0] / 上段=boards[1]。どちらも同じ作りで、表示位置だけ別々に持つ） */
+const geo={}, whites=[]; /* geo[midi]=[左端(白鍵単位),幅(白鍵単位)] */
 let wc=0;
 for(let m=FIRST;m<=LAST;m++){
-  const el=document.createElement('div'), blk=BLACK.includes(m%12);
-  el.className='key '+(blk?'b':'w'); el.dataset.m=m;
-  if(blk) el.style.left=`calc(var(--ww) * ${wc} - var(--ww) * .3)`;
-  else{el.style.left=`calc(var(--ww) * ${wc})`;el.appendChild(document.createElement('span'));whites.push(m);wc++;}
-  kin.appendChild(el); keyEl[m]=el;
+  if(BLACK.includes(m%12))geo[m]=[wc-.3,.6];
+  else{geo[m]=[wc,1];whites.push(m);wc++;}
 }
 const NW=whites.length;
+function mkBoard(el,inner,key){
+  const B={el,inner,key,keyEl:{},cnt:{},sid:null}; /* sid: この段をスクロール中の指のID */
+  for(let m=FIRST;m<=LAST;m++){
+    const d=document.createElement('div'),blk=geo[m][1]<1;
+    d.className='key '+(blk?'b':'w');d.dataset.m=m;
+    d.style.left=`calc(var(--ww) * ${+geo[m][0].toFixed(2)})`;
+    if(!blk)d.appendChild(document.createElement('span'));
+    inner.appendChild(d);B.keyEl[m]=d;
+  }
+  return B;
+}
+const boards=[mkBoard($('kb'),$('in'),'start'),mkBoard($('kb2'),$('in2'),'start2')];
 const nm=m=>EN[m%12]+(Math.floor(m/12)-1);
 
 function labels(){
-  whites.forEach(m=>{
+  boards.forEach(B=>whites.forEach(m=>{
     const pc=m%12,o=Math.floor(m/12)-1;let t='';
     if(S.lab==='c'&&pc===0)t='C'+o;
     else if(S.lab==='jp')t=pc===0?'ド'+o:JP[pc];
     else if(S.lab==='en')t=pc===0?'C'+o:EN[pc];
-    keyEl[m].firstChild.textContent=t;
-  });
+    B.keyEl[m].firstChild.textContent=t;
+  }));
+}
+function moveBoard(B){
+  S[B.key]=clamp(S[B.key],0,NW-S.vis);
+  B.inner.style.transform=`translateX(calc(var(--ww) * ${-S[B.key]}))`;
+}
+function rangeInfo(st){
+  const a=whites[Math.floor(st)],b=whites[Math.min(NW-1,Math.ceil(st+S.vis)-1)];
+  return {t:nm(a)+'–'+nm(b),o:Math.floor(a/12)-1};
 }
 function moveView(){
-  S.start=clamp(S.start,0,NW-S.vis);
-  kin.style.transform=`translateX(calc(var(--ww) * ${-S.start}))`;
-  $('pos').value=S.start;
-  const a=whites[Math.floor(S.start)], b=whites[Math.min(NW-1,Math.ceil(S.start+S.vis)-1)];
-  $('rt').textContent=nm(a)+'–'+nm(b);
-  $('octL').textContent='Oct '+(Math.floor(a/12)-1);
+  boards.forEach(moveBoard);
+  const two=S.lay==='two',l=rangeInfo(S.start),u=rangeInfo(S.start2);
+  $('pos').value=S.start;$('pos2').value=S.start2;
+  $('rt').textContent=two?u.t+' / '+l.t:l.t;       /* 二段のときは 上段 / 下段 */
+  $('octL').textContent=two?'Oct '+u.o+'/'+l.o:'Oct '+l.o;
+  drawRoll();
 }
 function layout(fromWid){
   S.vis=clamp(S.vis,5,NW);
   if(S.start==null)S.start=S.vis>=12?28:35;
-  kb.style.setProperty('--ww',(kb.clientWidth/S.vis)+'px');
-  $('pos').max=NW-S.vis; if(!fromWid)$('wid').value=S.vis;
+  if(S.start2==null)S.start2=S.start+14; /* 上段は下段より2オクターブ上から */
+  boards.forEach(B=>B.el.style.setProperty('--ww',(B.el.clientWidth/S.vis)+'px'));
+  $('pos').max=$('pos2').max=NW-S.vis; if(!fromWid)$('wid').value=S.vis;
   moveView();
 }
-new ResizeObserver(()=>layout()).observe(kb);
+/* 画面の使い方: 鍵盤のみ / ピアノロール＋鍵盤 / 二段鍵盤 */
+function applyLay(){
+  const two=S.lay==='two';
+  S.rl=S.lay==='roll';
+  $('roll').hidden=!S.rl;$('kb2').hidden=!two;$('rsw').hidden=!S.rl;
+  $('pos2').hidden=$('l2').hidden=!two;
+  $('l1').textContent=two?'下段':'位置';
+  $('rt').classList.toggle('two',two);
+  rnotes=[];ropen={};
+  layout();sizeRoll();
+}
+/* ResizeObserverのコールバック内でレイアウトを変えると「loop completed with undelivered notifications」エラーになるため、
+   次のフレームにまとめて処理する */
+let rzRaf=0;
+const onResize=()=>{if(rzRaf)return;rzRaf=requestAnimationFrame(()=>{rzRaf=0;layout();sizeRoll();});};
+boards.forEach(B=>new ResizeObserver(onResize).observe(B.el));
 
 /* 音声 */
 let ctx,bus,master,wet;
@@ -575,8 +622,7 @@ const CHORDS=[
   ['',[0,4,7]],['m',[0,3,7]],['dim',[0,3,6]],['aug',[0,4,8]],['sus4',[0,5,7]],['sus2',[0,2,7]],
   ['6',[0,4,7,9]],['m6',[0,3,7,9]],['7',[0,4,7,10]],['maj7',[0,4,7,11]],['m7',[0,3,7,10]],['mMaj7',[0,3,7,11]],
   ['dim7',[0,3,6,9]],['m7♭5',[0,3,6,10]],['aug7',[0,4,8,10]],['7sus4',[0,5,7,10]],
-  ['add9',[0,2,4,7]],['m(add9)',[0,2,3,7]],['6/9',[0,2,4,7,9]],['9',[0,2,4,7,10]],['maj9',[0,2,4,7,11]],['m9',[0,2,3,7,10]],
-  ['5',[0,7]]
+  ['add9',[0,2,4,7]],['m(add9)',[0,2,3,7]],['6/9',[0,2,4,7,9]],['9',[0,2,4,7,10]],['maj9',[0,2,4,7,11]],['m9',[0,2,3,7,10]]
 ];
 function detectChord(notes){ /* notes: 昇順のMIDIノート番号。当てはまるコードをすべて、優先度順に返す */
   const pcs=[...new Set(notes.map(n=>n%12))],bass=notes[0]%12,out=[];
@@ -594,18 +640,67 @@ function detectChord(notes){ /* notes: 昇順のMIDIノート番号。当ては�
 }
 function updChord(){
   const box=$('chord');
-  const notes=S.ch?Object.keys(cnt).filter(k=>cnt[k]>0).map(Number).sort((a,b)=>a-b):[];
-  if(notes.length<2){box.hidden=true;return;} /* 離したらすぐ消す */
+  const notes=S.ch?heldNotes():[];
+  if(notes.length<2){box.style.visibility='hidden';return;} /* 離したらすぐ消す */
   const N=S.cm==='jp'?PC_JP:PC_ABC,pcs=[...new Set(notes.map(n=>n%12))];
   const list=notes.map(n=>N[n%12]+(Math.floor(n/12)-1)).join(' ');
   const cs=detectChord(notes);
   let name;
   if(cs.length)name=cs.slice(0,4).map(c=>N[c.r]+c.suf+(c.bass!==c.r?'/'+N[c.bass]:'')).join('  /  ');
+  else if(pcs.length===1)name='オクターブ';
   else if(pcs.length===2)name=IV_NAME[(pcs.find(q=>q!==notes[0]%12)-notes[0]%12+12)%12];
   else name=pcs.map(q=>N[q]).join(' ');
   box.firstChild.textContent=name;box.lastChild.textContent=list;
-  box.hidden=false;
+  box.style.visibility='visible'; /* 表示の有無で配置が動かないよう visibility を使う */
 }
+
+/* ===== ピアノロール（押した長さのノートが、押した鍵盤の位置から上へ流れる） ===== */
+const roll=$('roll'),rc=$('rollc'),rx=rc.getContext('2d');
+let rnotes=[],ropen={},rafR=0;
+function sizeRoll(){
+  const w=roll.clientWidth,h=roll.clientHeight,d=window.devicePixelRatio||1;
+  rc._w=w;rc._h=h;
+  rc.width=Math.max(1,Math.round(w*d));rc.height=Math.max(1,Math.round(h*d));
+  rx.setTransform(d,0,0,d,0,0);
+  drawRoll();
+}
+function rr(x,y,w,h,r){r=Math.min(r,w/2,h/2);rx.beginPath();rx.moveTo(x+r,y);rx.arcTo(x+w,y,x+w,y+h,r);rx.arcTo(x+w,y+h,x,y+h,r);rx.arcTo(x,y+h,x,y,r);rx.arcTo(x,y,x+w,y,r);rx.closePath();}
+function drawRoll(){
+  const W=rc._w,H=rc._h;
+  if(!S.rl||!W||!H)return;
+  const ww=W/S.vis,now=performance.now(),sp=H*S.rv/9000; /* 1ミリ秒あたりの移動量(px) */
+  rx.clearRect(0,0,W,H);
+  /* 背景: 黒鍵の列と白鍵の境界線（鍵盤と位置をそろえる） */
+  for(let m=FIRST;m<=LAST;m++){
+    const g=geo[m],x=(g[0]-S.start)*ww;
+    if(x>W||x+g[1]*ww<0)continue;
+    if(g[1]<1){rx.fillStyle='rgba(0,0,0,.28)';rx.fillRect(x,0,g[1]*ww,H);}
+    else{rx.fillStyle=m%12===0?'rgba(255,255,255,.16)':'rgba(255,255,255,.06)';rx.fillRect(x,0,1,H);}
+  }
+  /* ノート: 下端=離した時刻、上端=押した時刻。押している間は下端が鍵盤に接したまま伸びる */
+  const cW=mix(S.ac,[255,255,255],.2),cB=S.ac,cH=mix(S.ac,[255,255,255],.55);
+  for(const n of rnotes){
+    const g=geo[n.m],x=(g[0]-S.start)*ww+1,w=g[1]*ww-2;
+    if(x+w<0||x>W)continue;
+    const e=n.e==null?now:n.e,yb=H-(now-e)*sp,yt=Math.min(H-(now-n.s)*sp,yb-3);
+    rx.fillStyle=n.e==null?cH:(g[1]<1?cB:cW);
+    rr(x,yt,w,yb-yt,3);rx.fill();
+  }
+  rnotes=rnotes.filter(n=>n.e==null||H-(now-n.e)*sp>0); /* 画面の上に出たノートは捨てる */
+}
+function rollLoop(){
+  rafR=0;drawRoll();
+  if(!rnotes.length)drawRoll(); /* 最後のノートが消えた後の背景だけの描き直し */
+  else if(S.rl)rafR=requestAnimationFrame(rollLoop);
+}
+function rollNote(m,on){
+  if(!S.rl)return;
+  const t=performance.now();
+  if(on){const n={m,s:t,e:null};rnotes.push(n);(ropen[m]=ropen[m]||[]).push(n);}
+  else{const n=ropen[m]&&ropen[m].shift();if(n)n.e=t;}
+  if(!rafR)rafR=requestAnimationFrame(rollLoop);
+}
+new ResizeObserver(onResize).observe(roll);
 
 /* サステイン */
 let sus=false;const pend=new Set();
@@ -615,41 +710,53 @@ function setSus(on){
   if(!on){pend.forEach(v=>v.release());pend.clear();}
 }
 
-/* タッチ・マウス（複数同時押し対応） */
-const act=new Map(), cnt={};
-let scrollId=null;
-function setOn(m,on){cnt[m]=(cnt[m]||0)+(on?1:-1);keyEl[m].classList.toggle('on',cnt[m]>0);updChord();}
-function keyAt(x,y){const r=kb.getBoundingClientRect();const e=document.elementFromPoint(clamp(x,r.left+1,r.right-1),y);return e&&e.closest?e.closest('.key'):null;}
-function press(id,k,x,y){
+/* タッチ・マウス（複数同時押し対応。上段・下段どちらでも同時に弾ける） */
+const act=new Map();
+function heldNotes(){const h=new Set();boards.forEach(B=>{for(const k in B.cnt)if(B.cnt[k]>0)h.add(+k);});return [...h].sort((a,b)=>a-b);}
+function setOn(B,m,on){B.cnt[m]=(B.cnt[m]||0)+(on?1:-1);B.keyEl[m].classList.toggle('on',B.cnt[m]>0);updChord();rollNote(m,on);}
+function keyAt(x,y,B){
+  const r=B.el.getBoundingClientRect();
+  const e=document.elementFromPoint(clamp(x,r.left+1,r.right-1),y),k=e&&e.closest?e.closest('.key'):null;
+  return k&&B.el.contains(k)?k:null; /* 触れ始めた鍵盤の外に出たら離したことにする */
+}
+function press(id,k,x,y,B){
   const m=+k.dataset.m;let vel=.8;
   if(S.vel){const r=k.getBoundingClientRect();vel=.3+.7*clamp((y-r.top)/r.height,0,1);}
-  act.set(id,{m,v:voice(m,vel),x,y,x0:x,y0:y,scr:false});setOn(m,true);
+  act.set(id,{b:B,m,v:voice(m,vel),x,y,x0:x,y0:y,scr:false});setOn(B,m,true);
 }
-function release(id){const a=act.get(id);if(!a)return;act.delete(id);if(scrollId===id){scrollId=null;save();}setOn(a.m,false);rel(a.v);}
-kb.addEventListener('pointerdown',e=>{
-  e.preventDefault();initAudio();
-  try{kb.setPointerCapture(e.pointerId)}catch(x){}
-  const k=keyAt(e.clientX,e.clientY);if(k)press(e.pointerId,k,e.clientX,e.clientY);
-});
+function release(id){const a=act.get(id);if(!a)return;act.delete(id);if(a.b.sid===id){a.b.sid=null;save();}setOn(a.b,a.m,false);rel(a.v);}
+const inRect=(x,y,el)=>{const r=el.getBoundingClientRect();return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom;};
 function slide(id){
   const a=act.get(id);if(!a)return;
-  const k=keyAt(a.x,a.y);
-  if(!k){release(id);return;}
-  if(+k.dataset.m!==a.m){release(id);press(id,k,a.x,a.y);}
-}
-kb.addEventListener('pointermove',e=>{
-  const a=act.get(e.pointerId);if(!a)return;
-  a.x=e.clientX;a.y=e.clientY;
-  if(S.sl==='gl')slide(e.pointerId);
-  else if(S.sl==='sc'){
-    /* 押した鍵盤が指に吸い付くように、指の横移動量だけ表示をスクロール */
-    const dx=a.x-a.x0;
-    if(!a.scr&&scrollId==null&&Math.abs(dx)>24){a.scr=true;scrollId=e.pointerId;a.bx=a.x;a.bs=S.start;}
-    if(scrollId===e.pointerId){S.start=a.bs-(a.x-a.bx)/(kb.clientWidth/S.vis);moveView();}
+  const k=keyAt(a.x,a.y,a.b);
+  if(!k){
+    /* 指がもう一方の段に移っても、押し始めた段の音をそのまま継続する */
+    if(boards.some(b=>b!==a.b&&!b.el.hidden&&inRect(a.x,a.y,b.el)))return;
+    release(id);return;
   }
+  if(+k.dataset.m!==a.m){const B=a.b;release(id);press(id,k,a.x,a.y,B);}
+}
+boards.forEach(B=>{
+  const el=B.el;
+  el.addEventListener('pointerdown',e=>{
+    e.preventDefault();initAudio();
+    try{el.setPointerCapture(e.pointerId)}catch(x){}
+    const k=keyAt(e.clientX,e.clientY,B);if(k)press(e.pointerId,k,e.clientX,e.clientY,B);
+  });
+  el.addEventListener('pointermove',e=>{
+    const a=act.get(e.pointerId);if(!a)return;
+    a.x=e.clientX;a.y=e.clientY;
+    if(S.sl==='gl')slide(e.pointerId);
+    else if(S.sl==='sc'){
+      /* 押した鍵盤が指に吸い付くように、指の横移動量だけ、その段の表示をスクロール */
+      const dx=a.x-a.x0,Bd=a.b,K=Bd.key;
+      if(!a.scr&&Bd.sid==null&&Math.abs(dx)>24){a.scr=true;Bd.sid=e.pointerId;a.bx=a.x;a.bs=S[K];} /* スクロールは段ごとに1本の指が担当（上下の段は同時に動かせる） */
+      if(Bd.sid===e.pointerId){S[K]=a.bs-(a.x-a.bx)/(Bd.el.clientWidth/S.vis);moveView();}
+    }
+  });
+  ['pointerup','pointercancel','lostpointercapture'].forEach(t=>el.addEventListener(t,e=>release(e.pointerId)));
+  el.addEventListener('contextmenu',e=>e.preventDefault());
 });
-['pointerup','pointercancel','lostpointercapture'].forEach(t=>kb.addEventListener(t,e=>release(e.pointerId)));
-kb.addEventListener('contextmenu',e=>e.preventDefault());
 function panic(){[...act.keys()].forEach(release);pend.clear();live.forEach(v=>v.release());setSus(false);}
 addEventListener('blur',panic);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)panic();});
@@ -663,18 +770,21 @@ Object.entries(INST).forEach(([k,v])=>{
 });
 $('inst').value=S.inst;
 $('inst').onchange=e=>{S.inst=e.target.value;if(isSf(S.inst))activateFont(+S.inst.slice(3));updSf();save();};
-const octMove=d=>{S.start+=d*7;save();moveView();};
+const octMove=d=>{S.start+=d*7;if(S.lay==='two')S.start2+=d*7;save();moveView();}; /* 二段のときは上下とも動かす */
 $('octD').onclick=()=>octMove(-1);$('octU').onclick=()=>octMove(1);
 $('sus').onclick=()=>{initAudio();setSus(!sus);};
 $('cfgB').onclick=()=>{const o=$('cfg').classList.toggle('open');$('cfgB').classList.toggle('on',o);};
 $('pos').oninput=e=>{S.start=+e.target.value;moveView();};
+$('pos2').oninput=e=>{S.start2=+e.target.value;moveView();};$('pos2').onchange=save;
 $('pos').onchange=save;
-$('wid').oninput=e=>{const c=S.start+S.vis/2;S.vis=+e.target.value;S.start=c-S.vis/2;layout(true);};
+$('wid').oninput=e=>{const ov=S.vis,nv=+e.target.value;boards.forEach(B=>{S[B.key]+=(ov-nv)/2;});S.vis=nv;layout(true);};
 $('wid').onchange=save;
 $('vol').value=S.vol;$('vol').oninput=e=>{S.vol=+e.target.value;setVol();save();};
 $('rev').value=S.rev;$('rev').oninput=e=>{S.rev=+e.target.value;setRev();save();};
 $('lab').value=S.lab;$('lab').onchange=e=>{S.lab=e.target.value;save();labels();};
 $('vel').checked=S.vel;$('vel').onchange=e=>{S.vel=e.target.checked;save();};
+$('lay').value=S.lay;$('lay').onchange=e=>{S.lay=e.target.value;save();applyLay();};
+$('rv').value=S.rv;$('rv').oninput=e=>{S.rv=+e.target.value;drawRoll();};$('rv').onchange=save;
 $('chk').checked=S.ch;$('chk').onchange=e=>{S.ch=e.target.checked;save();updChord();};
 $('chm').value=S.cm;$('chm').onchange=e=>{S.cm=e.target.value;save();updChord();};
 $('sl').value=S.sl;$('sl').onchange=e=>{S.sl=e.target.value;save();};
@@ -748,6 +858,7 @@ function applyAccent(){
   rs.setProperty('--acInk',(.299*r+.587*g+.114*b)>150?'#10181f':'#fff');
   $('acc').value=h;
   document.querySelectorAll('.sw').forEach(e=>e.classList.toggle('sel',e.dataset.c===h));
+  drawRoll();
 }
 PRESETS.forEach(c=>{
   const b=document.createElement('button');
@@ -758,7 +869,16 @@ PRESETS.forEach(c=>{
 $('acc').oninput=e=>{S.ac=e.target.value.toLowerCase();save();applyAccent();};
 applyAccent();
 
-layout();labels();
+/* iOS: ダブルタップで出る丸いルーペ（テキスト選択の拡大鏡）やページの拡大を出さない */
+['selectstart','gesturestart','gesturechange','gestureend','dblclick'].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
+let lastTap=0;
+document.addEventListener('touchend',e=>{
+  const t=Date.now();
+  if(t-lastTap<350&&!(e.target.closest&&e.target.closest('input,select,button,label')))e.preventDefault();
+  lastTap=t;
+},{passive:false});
+
+applyLay();labels();
 </script>
 </body>
 </html>

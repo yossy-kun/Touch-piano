@@ -869,14 +869,24 @@ PRESETS.forEach(c=>{
 $('acc').oninput=e=>{S.ac=e.target.value.toLowerCase();save();applyAccent();};
 applyAccent();
 
-/* iOS: ダブルタップで出る丸いルーペ（テキスト選択の拡大鏡）やページの拡大を出さない */
+/* iOS: ダブルタップで出る丸いルーペ（拡大鏡）やページの拡大を出さない。
+   入力欄・選択欄・ラベル以外では touchstart の既定動作を止める（鍵盤はpointerイベントで動くので影響しない）。
+   ボタンは既定動作を止めるとclickも出なくなるため、指を離した位置がボタン上ならclickを自分で起こす。 */
 ['selectstart','gesturestart','gesturechange','gestureend','dblclick'].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
-let lastTap=0;
-document.addEventListener('touchend',e=>{
-  const t=Date.now();
-  if(t-lastTap<350&&!(e.target.closest&&e.target.closest('input,select,button,label')))e.preventDefault();
-  lastTap=t;
+let tBtn=null;
+document.addEventListener('touchstart',e=>{
+  const t=e.target;
+  if(t.closest&&t.closest('input,select,label,a')){tBtn=null;return;}
+  e.preventDefault();
+  tBtn=t.closest?t.closest('button'):null;
 },{passive:false});
+document.addEventListener('touchend',e=>{
+  const b=tBtn;tBtn=null;
+  if(!b)return;
+  const c=e.changedTouches[0],el=c&&document.elementFromPoint(c.clientX,c.clientY);
+  if(el&&b.contains(el))b.click();
+},{passive:false});
+document.addEventListener('touchcancel',()=>{tBtn=null;});
 
 applyLay();labels();
 </script>
